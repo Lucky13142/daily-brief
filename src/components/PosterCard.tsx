@@ -21,7 +21,11 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
     const url = (poster.raw_data as Record<string, unknown>)?.url as string || "";
 
     return (
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2.5">
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2.5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer">
             {/* 标题 */}
             <h3 className="text-[15px] font-bold text-gray-900 leading-snug line-clamp-2">
                 {poster.title}
@@ -62,6 +66,6 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
                     })}
                 </time>
             </div>
-        </div>
+        </a>
     );
 }

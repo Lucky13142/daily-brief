@@ -12,6 +12,16 @@ const AI_ECONOMY_KEYWORDS = [
   "投资", "融资", "IPO", "上市", "科技", "半导体", "新能源",
 ];
 
+const INVALID_TITLES = [
+  "今日热榜", "热榜", "热搜榜", "头条热榜", "今日头条",
+  "热门搜索", "搜索热点", "热搜排行",
+];
+
+function isValidTitle(title: string): boolean {
+  if (!title || title.length < 4) return false;
+  return !INVALID_TITLES.some((inv) => title.includes(inv));
+}
+
 function matchesKeywords(title: string): boolean {
   const lower = title.toLowerCase();
   return AI_ECONOMY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
@@ -38,9 +48,10 @@ export async function fetchToutiaoHotList(): Promise<HotItem[]> {
     }
 
     const filtered = list
-      .filter((item: Record<string, unknown>) =>
-        matchesKeywords(String(item.Title || item.title || ""))
-      )
+      .filter((item: Record<string, unknown>) => {
+        const title = String(item.Title || item.title || "");
+        return isValidTitle(title) && matchesKeywords(title);
+      })
       .slice(0, 10)
       .map((item: Record<string, unknown>, index: number): HotItem => ({
         source: "toutiao",
@@ -54,19 +65,23 @@ export async function fetchToutiaoHotList(): Promise<HotItem[]> {
       }));
 
     if (filtered.length === 0) {
-      // 关键词没匹配到，取前 10 条
-      return list.slice(0, 10).map(
-        (item: Record<string, unknown>): HotItem => ({
-          source: "toutiao",
-          title: String(item.Title || item.title || ""),
-          url: String(
-            item.Url ||
-            item.url ||
-            `https://www.toutiao.com/trending/${item.ClusterIdStr || ""}`
-          ),
-          hotScore: Number(item.HotValue || 0),
-        })
-      );
+      // 关键词没匹配到，取前 10 条有效条目
+      return list
+        .filter((item: Record<string, unknown>) =>
+          isValidTitle(String(item.Title || item.title || ""))
+        )
+        .slice(0, 10).map(
+          (item: Record<string, unknown>): HotItem => ({
+            source: "toutiao",
+            title: String(item.Title || item.title || ""),
+            url: String(
+              item.Url ||
+              item.url ||
+              `https://www.toutiao.com/trending/${item.ClusterIdStr || ""}`
+            ),
+            hotScore: Number(item.HotValue || 0),
+          })
+        );
     }
 
     return filtered;
@@ -94,13 +109,17 @@ async function fetchFromAggregator(): Promise<HotItem[]> {
     throw new Error("Aggregator returned no data");
   }
 
-  const filtered = data.data
+  const validData = data.data.filter((item: Record<string, unknown>) =>
+    isValidTitle(String(item.title || ""))
+  );
+
+  const filtered = validData
     .filter((item: Record<string, unknown>) =>
       matchesKeywords(String(item.title || ""))
     )
     .slice(0, 10);
 
-  const items = filtered.length > 0 ? filtered : data.data.slice(0, 10);
+  const items = filtered.length > 0 ? filtered : validData.slice(0, 10);
 
   return items.map(
     (item: Record<string, unknown>): HotItem => ({

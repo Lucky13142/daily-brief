@@ -27,45 +27,54 @@ export async function GET(request: NextRequest) {
         if (toutiaoItems.status === "fulfilled") allItems.push(...toutiaoItems.value);
         if (baiduItems.status === "fulfilled") allItems.push(...baiduItems.value);
 
-        if (allItems.length === 0) {
+        // 过滤无效条目（空标题、标题太短）
+        const validItems = allItems.filter(
+            (item) => item.title && item.title.trim().length >= 4
+        );
+
+        if (validItems.length === 0) {
             return NextResponse.json(
                 { error: "All scrapers failed", toutiaoItems, baiduItems },
                 { status: 500 }
             );
         }
 
-        console.log(`[Daily Job] Fetched ${allItems.length} hot items`);
+        console.log(`[Daily Job] Fetched ${validItems.length} valid hot items`);
 
         // 2. 批量调用 AI 生成摘要和标签（动态导入）
         const { generateNewsBatch } = await import("@/lib/ai/generate-copy");
-        const newsItems = await generateNewsBatch(allItems);
+        const newsItems = await generateNewsBatch(validItems);
 
         console.log(`[Daily Job] Generated ${newsItems.length} news summaries`);
 
-        // 3. 写入数据库
+        // 3. 写入数据库（跳过摘要为空的条目）
         let successCount = 0;
-        for (let i = 0; i < allItems.length; i++) {
+        for (let i = 0; i < validItems.length; i++) {
+            if (!newsItems[i]?.summary || newsItems[i].summary.trim().length < 5) {
+                console.warn(`Skipped empty summary: ${validItems[i].title}`);
+                continue;
+            }
             try {
                 await insertPoster({
-                    source: allItems[i].source,
+                    source: validItems[i].source,
                     title: newsItems[i].title,
                     summary: newsItems[i].summary,
                     hot_rank: i + 1,
                     raw_data: {
-                        url: allItems[i].url,
-                        hotScore: allItems[i].hotScore,
+                        url: validItems[i].url,
+                        hotScore: validItems[i].hotScore,
                         tags: newsItems[i].tags,
                     },
                 });
                 successCount++;
             } catch (err) {
-                console.error(`Failed to insert: ${allItems[i].title}`, err);
+                console.error(`Failed to insert: ${validItems[i].title}`, err);
             }
         }
 
         return NextResponse.json({
-            message: `Daily job completed: ${successCount}/${allItems.length} saved`,
-            count: allItems.length,
+            message: `Daily job completed: ${successCount}/${validItems.length} saved`,
+            count: validItems.length,
             successCount,
             timestamp: new Date().toISOString(),
         });
