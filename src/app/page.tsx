@@ -1,23 +1,17 @@
 import PosterWall from "@/components/PosterWall";
-import { getSupabase } from "@/lib/supabase";
+import { getRecentPosters } from "@/lib/db";
 import { Poster } from "@/lib/types";
 
 async function getPosters(): Promise<Poster[]> {
-  const { data, error } = await getSupabase()
-    .from("posters")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(30);
-
-  if (error) {
+  try {
+    return await getRecentPosters(30);
+  } catch (error) {
     console.error("Failed to fetch posters:", error);
     return [];
   }
-
-  return (data as Poster[]) || [];
 }
 
-export const dynamic = "force-dynamic"; // 运行时渲染，避免构建时调用 Supabase
+export const dynamic = "force-dynamic";
 export const revalidate = 3600; // ISR: 每小时重新验证
 
 export default async function HomePage() {

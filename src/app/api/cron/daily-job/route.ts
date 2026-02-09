@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWeiboHot } from "@/lib/scrapers/weibo";
 import { fetchBaiduHot } from "@/lib/scrapers/baidu";
 import { fetchHackerNewsHot } from "@/lib/scrapers/hackernews";
-import { generateCopy } from "@/lib/ai/generate-copy";
-import { generateImage } from "@/lib/ai/generate-image";
-import { getSupabase } from "@/lib/supabase";
+import { insertPoster } from "@/lib/db";
 import { HotItem } from "@/lib/types";
 
 export const maxDuration = 300; // 5 分钟超时（图片生成较慢）
@@ -58,16 +56,18 @@ export async function GET(request: NextRequest) {
             const hotItem: HotItem = result.value;
 
             try {
-                // 3. AI 生成文案和绘图 Prompt
+                // 3. AI 生成文案和绘图 Prompt（动态导入，避免模块加载时初始化 OpenAI）
+                const { generateCopy } = await import("@/lib/ai/generate-copy");
                 console.log(`Generating copy for: ${hotItem.title}`);
                 const copy = await generateCopy(hotItem);
 
                 // 4. DALL-E 3 生成图片
+                const { generateImage } = await import("@/lib/ai/generate-image");
                 console.log(`Generating image for: ${hotItem.title}`);
                 const imageUrl = await generateImage(copy.imagePrompt);
 
-                // 5. 写入 Supabase
-                const { error: dbError } = await getSupabase().from("posters").insert({
+                // 5. 写入 Vercel Postgres
+                await insertPoster({
                     source: hotItem.source,
                     title: hotItem.title,
                     summary: copy.summary,
@@ -79,10 +79,6 @@ export async function GET(request: NextRequest) {
                         hotScore: hotItem.hotScore,
                     },
                 });
-
-                if (dbError) {
-                    throw new Error(`Supabase insert error: ${dbError.message}`);
-                }
 
                 results.push({
                     source: hotItem.source,
