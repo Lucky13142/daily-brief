@@ -9,7 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.19",
+    "@langchain/openai": "^1.2.5",
+    "@supabase/supabase-js": "^2.95.3",
+    "cheerio": "^1.2.0",
+    "langchain": "^1.2.18",
     "next": "16.1.6",
+    "openai": "^6.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

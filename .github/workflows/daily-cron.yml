@@ -1,0 +1,23 @@
+name: Daily Brief - Cron Job
+
+on:
+  schedule:
+    # UTC 00:00 = 北京时间 08:00
+    - cron: "0 0 * * *"
+  workflow_dispatch: # 支持手动触发
+
+jobs:
+  trigger-daily-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Daily Job API
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/daily-job")
+          echo "Response status: $response"
+          if [ "$response" -ne 200 ]; then
+            echo "API call failed with status $response"
+            exit 1
+          fi
+          echo "Daily job triggered successfully"
