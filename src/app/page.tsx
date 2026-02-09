@@ -1,4 +1,5 @@
 import PosterWall from "@/components/PosterWall";
+import TriggerButton from "@/components/TriggerButton";
 import { getRecentPosters } from "@/lib/db";
 import { Poster } from "@/lib/types";
 
@@ -46,6 +47,9 @@ export default async function HomePage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8 flex justify-center">
+          <TriggerButton />
+        </div>
         <PosterWall posters={posters} />
       </div>
 
