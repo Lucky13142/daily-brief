@@ -2,6 +2,7 @@ import { Poster } from "@/lib/types";
 
 const SOURCE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     weibo: { label: "微博热搜", color: "text-red-600", bg: "bg-red-50 border-red-200" },
+    toutiao: { label: "今日头条", color: "text-red-600", bg: "bg-red-50 border-red-200" },
     baidu: { label: "百度热搜", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
     hackernews: { label: "HackerNews", color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
 };

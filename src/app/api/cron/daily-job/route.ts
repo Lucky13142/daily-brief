@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchWeiboHot } from "@/lib/scrapers/weibo";
+import { fetchWeiboHot } from "@/lib/scrapers/toutiao";
 import { fetchBaiduHot } from "@/lib/scrapers/baidu";
 import { fetchHackerNewsHot } from "@/lib/scrapers/hackernews";
 import { insertPoster } from "@/lib/db";
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     try {
         // 1. 并行获取三个来源的热搜
         const scrapers = [
-            { name: "weibo", fn: fetchWeiboHot },
+            { name: "toutiao", fn: fetchWeiboHot },
             { name: "baidu", fn: fetchBaiduHot },
             { name: "hackernews", fn: fetchHackerNewsHot },
         ];

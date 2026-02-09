@@ -1,5 +1,5 @@
 export interface HotItem {
-    source: "weibo" | "baidu" | "hackernews";
+    source: "weibo" | "baidu" | "hackernews" | "toutiao";
     title: string;
     url: string;
     hotScore: number;

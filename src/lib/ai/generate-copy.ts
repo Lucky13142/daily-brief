@@ -47,6 +47,7 @@ const parser = new JsonOutputParser<GeneratedCopy>();
 export async function generateCopy(hotItem: HotItem): Promise<GeneratedCopy> {
     const sourceMap: Record<string, string> = {
         weibo: "微博热搜",
+        toutiao: "今日头条热榜",
         baidu: "百度热搜",
         hackernews: "HackerNews",
     };
