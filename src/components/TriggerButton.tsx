@@ -58,17 +58,17 @@ export default function TriggerButton() {
 
     return (
         <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                     onClick={handleTrigger}
                     disabled={loading}
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
                     {loading ? "生成中，请稍候..." : "手动生成今日资讯"}
                 </button>
                 <button
                     onClick={handleDownload}
-                    className="px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-full shadow-md border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-full shadow-md border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all active:scale-95"
                 >
                     下载海报图片
                 </button>
@@ -76,8 +76,8 @@ export default function TriggerButton() {
             {result && (
                 <p
                     className={`text-sm ${result.startsWith("失败") || result.startsWith("请求")
-                            ? "text-red-500"
-                            : "text-green-600"
+                        ? "text-red-500"
+                        : "text-green-600"
                         }`}
                 >
                     {result}

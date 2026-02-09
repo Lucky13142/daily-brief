@@ -25,9 +25,9 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2.5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer">
+            className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm flex flex-col gap-2 sm:gap-2.5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer active:scale-[0.98]">
             {/* 标题 */}
-            <h3 className="text-[15px] font-bold text-gray-900 leading-snug line-clamp-2">
+            <h3 className="text-sm sm:text-[15px] font-bold text-gray-900 leading-snug line-clamp-2">
                 {poster.title}
             </h3>
 
@@ -36,7 +36,7 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
                 {tags.map((tag, i) => (
                     <span
                         key={i}
-                        className="px-2 py-0.5 text-[11px] font-medium rounded bg-blue-50 text-blue-600 border border-blue-100"
+                        className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-medium rounded bg-blue-50 text-blue-600 border border-blue-100"
                     >
                         {tag}
                     </span>
@@ -44,12 +44,12 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
             </div>
 
             {/* 摘要 */}
-            <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-3">
+            <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed line-clamp-3">
                 {poster.summary}
             </p>
 
             {/* 底部：来源 + 时间 */}
-            <div className="flex items-center justify-between text-[11px] text-gray-400 mt-auto pt-1">
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-gray-400 mt-auto pt-1">
                 <span className="flex items-center gap-1">
                     <span
                         className={`inline-block w-1.5 h-1.5 rounded-full ${style.color}`}
