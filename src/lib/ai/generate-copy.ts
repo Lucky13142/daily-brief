@@ -3,11 +3,17 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { HotItem, GeneratedCopy } from "../types";
 
-const model = new ChatOpenAI({
-    modelName: "gpt-4o",
-    temperature: 0.7,
-    openAIApiKey: process.env.OPENAI_API_KEY,
-});
+let _model: ChatOpenAI | null = null;
+function getModel() {
+    if (!_model) {
+        _model = new ChatOpenAI({
+            modelName: "gpt-4o",
+            temperature: 0.7,
+            openAIApiKey: process.env.OPENAI_API_KEY,
+        });
+    }
+    return _model;
+}
 
 const prompt = ChatPromptTemplate.fromMessages([
     [
@@ -45,7 +51,7 @@ export async function generateCopy(hotItem: HotItem): Promise<GeneratedCopy> {
         hackernews: "HackerNews",
     };
 
-    const chain = prompt.pipe(model).pipe(parser);
+    const chain = prompt.pipe(getModel()).pipe(parser);
 
     const result = await chain.invoke({
         source: sourceMap[hotItem.source] || hotItem.source,
