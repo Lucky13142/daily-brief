@@ -1,10 +1,23 @@
 import { HotItem } from "../types";
 
-// 百度热搜 API（移动端接口，海外相对可访问）
 const BAIDU_API =
     "https://top.baidu.com/api/board?platform=wise&tab=realtime";
 
-export async function fetchBaiduHot(): Promise<HotItem> {
+const AI_ECONOMY_KEYWORDS = [
+    "ai", "AI", "人工智能", "大模型", "GPT", "gpt", "机器人", "智能",
+    "深度学习", "算法", "芯片", "算力", "自动驾驶", "无人", "数据",
+    "Claude", "OpenAI", "Gemini", "DeepSeek", "LLM", "AGI",
+    "经济", "GDP", "股市", "A股", "美股", "港股", "基金", "房价",
+    "利率", "通胀", "央行", "降息", "加息", "就业", "消费",
+    "投资", "融资", "IPO", "上市", "科技", "半导体", "新能源",
+];
+
+function matchesKeywords(title: string): boolean {
+    const lower = title.toLowerCase();
+    return AI_ECONOMY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+}
+
+export async function fetchBaiduHotList(): Promise<HotItem[]> {
     try {
         const res = await fetch(BAIDU_API, {
             headers: {
@@ -24,23 +37,49 @@ export async function fetchBaiduHot(): Promise<HotItem> {
             throw new Error("Baidu API returned no data");
         }
 
-        const top = list[0];
-        return {
-            source: "baidu",
-            title: top.word || top.query || top.desc,
-            url:
-                top.url ||
-                `https://www.baidu.com/s?wd=${encodeURIComponent(top.word || top.query)}`,
-            hotScore: top.hotScore || 0,
-        };
+        const filtered = list
+            .filter((item: Record<string, unknown>) =>
+                matchesKeywords(String(item.word || item.query || item.desc || ""))
+            )
+            .slice(0, 10)
+            .map(
+                (item: Record<string, unknown>): HotItem => ({
+                    source: "baidu",
+                    title: String(item.word || item.query || item.desc || ""),
+                    url: String(
+                        item.url ||
+                        `https://www.baidu.com/s?wd=${encodeURIComponent(
+                            String(item.word || item.query || "")
+                        )}`
+                    ),
+                    hotScore: Number(item.hotScore || 0),
+                })
+            );
+
+        if (filtered.length === 0) {
+            return list.slice(0, 10).map(
+                (item: Record<string, unknown>): HotItem => ({
+                    source: "baidu",
+                    title: String(item.word || item.query || item.desc || ""),
+                    url: String(
+                        item.url ||
+                        `https://www.baidu.com/s?wd=${encodeURIComponent(
+                            String(item.word || item.query || "")
+                        )}`
+                    ),
+                    hotScore: Number(item.hotScore || 0),
+                })
+            );
+        }
+
+        return filtered;
     } catch (error) {
         console.error("Baidu API failed:", error);
-        // 降级：使用第三方聚合 API
         return fetchFromAggregator();
     }
 }
 
-async function fetchFromAggregator(): Promise<HotItem> {
+async function fetchFromAggregator(): Promise<HotItem[]> {
     const res = await fetch("https://api.vvhan.com/api/hotlist/baiduRD", {
         headers: {
             "User-Agent":
@@ -58,11 +97,20 @@ async function fetchFromAggregator(): Promise<HotItem> {
         throw new Error("Baidu aggregator returned no data");
     }
 
-    const top = data.data[0];
-    return {
-        source: "baidu",
-        title: top.title,
-        url: top.url || top.mobilUrl || "",
-        hotScore: top.hot || 0,
-    };
+    const filtered = data.data
+        .filter((item: Record<string, unknown>) =>
+            matchesKeywords(String(item.title || ""))
+        )
+        .slice(0, 10);
+
+    const items = filtered.length > 0 ? filtered : data.data.slice(0, 10);
+
+    return items.map(
+        (item: Record<string, unknown>): HotItem => ({
+            source: "baidu",
+            title: String(item.title || ""),
+            url: String(item.url || item.mobilUrl || ""),
+            hotScore: Number(item.hot || 0),
+        })
+    );
 }

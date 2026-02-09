@@ -13,6 +13,7 @@
     "@langchain/openai": "^1.2.5",
     "@vercel/postgres": "^0.10.0",
     "cheerio": "^1.2.0",
+    "html-to-image": "^1.11.13",
     "langchain": "^1.2.18",
     "next": "16.1.6",
     "openai": "^6.18.0",

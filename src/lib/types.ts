@@ -1,13 +1,14 @@
 export interface HotItem {
-    source: "weibo" | "baidu" | "hackernews" | "toutiao";
+    source: "toutiao" | "baidu";
     title: string;
     url: string;
     hotScore: number;
 }
 
-export interface GeneratedCopy {
+export interface GeneratedNewsItem {
+    title: string;
     summary: string;
-    imagePrompt: string;
+    tags: string[];
 }
 
 export interface Poster {

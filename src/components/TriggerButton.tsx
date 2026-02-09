@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toPng } from "html-to-image";
 
 export default function TriggerButton() {
     const [loading, setLoading] = useState(false);
@@ -12,25 +13,73 @@ export default function TriggerButton() {
         try {
             const res = await fetch("/api/cron/daily-job");
             const data = await res.json();
-            setResult(res.ok ? `${data.message}` : `失败: ${data.error}`);
+            if (res.ok) {
+                setResult(`${data.message}`);
+                // 生成成功后刷新页面展示新数据
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                setResult(`失败: ${data.error}`);
+            }
         } catch (err) {
-            setResult(`请求异常: ${err instanceof Error ? err.message : String(err)}`);
+            setResult(
+                `请求异常: ${err instanceof Error ? err.message : String(err)}`
+            );
         } finally {
             setLoading(false);
         }
     }
 
+    async function handleDownload() {
+        const el = document.getElementById("poster-content");
+        if (!el) return;
+
+        try {
+            const dataUrl = await toPng(el, {
+                backgroundColor: "#f0f7ff",
+                pixelRatio: 2,
+                style: {
+                    borderRadius: "0",
+                },
+            });
+            const link = document.createElement("a");
+            const dateStr = new Date().toLocaleDateString("zh-CN", {
+                timeZone: "Asia/Shanghai",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            }).replace(/\//g, "-");
+            link.download = `今日AI经济资讯_${dateStr}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error("Download failed:", err);
+        }
+    }
+
     return (
         <div className="flex flex-col items-center gap-3">
-            <button
-                onClick={handleTrigger}
-                disabled={loading}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-                {loading ? "生成中，请稍候..." : "手动生成今日海报"}
-            </button>
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={handleTrigger}
+                    disabled={loading}
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-medium rounded-full shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                    {loading ? "生成中，请稍候..." : "手动生成今日资讯"}
+                </button>
+                <button
+                    onClick={handleDownload}
+                    className="px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-full shadow-md border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all"
+                >
+                    下载海报图片
+                </button>
+            </div>
             {result && (
-                <p className={`text-sm ${result.startsWith("失败") || result.startsWith("请求") ? "text-red-500" : "text-green-600"}`}>
+                <p
+                    className={`text-sm ${result.startsWith("失败") || result.startsWith("请求")
+                            ? "text-red-500"
+                            : "text-green-600"
+                        }`}
+                >
                     {result}
                 </p>
             )}

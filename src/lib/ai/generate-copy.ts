@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
-import { HotItem, GeneratedCopy } from "../types";
+import { HotItem, GeneratedNewsItem } from "../types";
 
 let _model: ChatOpenAI | null = null;
 function getModel() {
@@ -15,53 +15,54 @@ function getModel() {
     return _model;
 }
 
-const prompt = ChatPromptTemplate.fromMessages([
+const batchPrompt = ChatPromptTemplate.fromMessages([
     [
         "system",
-        `你是一位专业的新闻编辑和视觉设计师。你需要根据给定的热搜话题，完成两项任务：
-1. 撰写一段简洁有力的中文摘要（100字以内），要求信息量大、引人注目
-2. 生成一段英文 DALL-E 绘图 Prompt，用于生成一张与该新闻相关的海报风格插画
+        `你是一位专业的科技与财经新闻编辑。请为每条热搜新闻生成：
+1. 一段简洁有力的中文摘要（60字以内），信息量大、引人注目
+2. 2-3个关键标签（每个标签2-4个字）
 
-请严格按照以下 JSON 格式输出：
-{{
-  "summary": "中文摘要内容",
-  "imagePrompt": "English DALL-E prompt for poster illustration"
-}}
+请严格按照以下 JSON 数组格式输出（与输入数量一一对应）：
+[
+  {{
+    "title": "原始标题",
+    "summary": "中文摘要",
+    "tags": ["标签1", "标签2"]
+  }}
+]
 
-关于绘图 Prompt 的要求：
-- 风格：现代海报插画风，色彩鲜艳醒目
-- 不要包含任何文字或字母
-- 要抽象地表达新闻主题的核心意象
-- 适合作为社交媒体分享的正方形海报`,
+标签要求：
+- 提取核心关键词，如公司名、技术名、政策名
+- 简短精炼，2-4个字`,
     ],
     [
         "human",
-        `热搜来源：{source}
-热搜标题：{title}
-热搜链接：{url}`,
+        `以下是{count}条热搜新闻，请逐条生成摘要和标签：
+
+{newslist}`,
     ],
 ]);
 
-const parser = new JsonOutputParser<GeneratedCopy>();
+const parser = new JsonOutputParser<GeneratedNewsItem[]>();
 
-export async function generateCopy(hotItem: HotItem): Promise<GeneratedCopy> {
-    const sourceMap: Record<string, string> = {
-        weibo: "微博热搜",
-        toutiao: "今日头条热榜",
-        baidu: "百度热搜",
-        hackernews: "HackerNews",
-    };
+export async function generateNewsBatch(
+    items: HotItem[]
+): Promise<GeneratedNewsItem[]> {
+    const newslist = items
+        .map((item, i) => `${i + 1}. 【${item.source === "toutiao" ? "今日头条" : "百度热搜"}】${item.title}`)
+        .join("\n");
 
-    const chain = prompt.pipe(getModel()).pipe(parser);
+    const chain = batchPrompt.pipe(getModel()).pipe(parser);
 
     const result = await chain.invoke({
-        source: sourceMap[hotItem.source] || hotItem.source,
-        title: hotItem.title,
-        url: hotItem.url,
+        count: String(items.length),
+        newslist,
     });
 
-    return {
-        summary: result.summary,
-        imagePrompt: result.imagePrompt,
-    };
+    // 确保返回数量一致，补全缺失项
+    return items.map((item, i) => ({
+        title: item.title,
+        summary: result[i]?.summary || item.title,
+        tags: result[i]?.tags || [],
+    }));
 }

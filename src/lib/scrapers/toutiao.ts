@@ -1,11 +1,23 @@
 import { HotItem } from "../types";
 
-// 今日头条热榜 API（ByteDance 产品，海外可访问）
 const TOUTIAO_HOT_URL =
   "https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc";
 
-export async function fetchWeiboHot(): Promise<HotItem> {
-  // 优先使用今日头条热榜（海外服务器可访问）
+const AI_ECONOMY_KEYWORDS = [
+  "ai", "AI", "人工智能", "大模型", "GPT", "gpt", "机器人", "智能",
+  "深度学习", "算法", "芯片", "算力", "自动驾驶", "无人", "数据",
+  "Claude", "OpenAI", "Gemini", "DeepSeek", "LLM", "AGI",
+  "经济", "GDP", "股市", "A股", "美股", "港股", "基金", "房价",
+  "利率", "通胀", "央行", "降息", "加息", "就业", "消费",
+  "投资", "融资", "IPO", "上市", "科技", "半导体", "新能源",
+];
+
+function matchesKeywords(title: string): boolean {
+  const lower = title.toLowerCase();
+  return AI_ECONOMY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+}
+
+export async function fetchToutiaoHotList(): Promise<HotItem[]> {
   try {
     const res = await fetch(TOUTIAO_HOT_URL, {
       headers: {
@@ -25,22 +37,47 @@ export async function fetchWeiboHot(): Promise<HotItem> {
       throw new Error("No Toutiao hot data found");
     }
 
-    const top = list[0];
-    return {
-      source: "toutiao",
-      title: top.Title || top.title,
-      url: top.Url || top.url || `https://www.toutiao.com/trending/${top.ClusterIdStr || ""}`,
-      hotScore: top.HotValue || 0,
-    };
+    const filtered = list
+      .filter((item: Record<string, unknown>) =>
+        matchesKeywords(String(item.Title || item.title || ""))
+      )
+      .slice(0, 10)
+      .map((item: Record<string, unknown>, index: number): HotItem => ({
+        source: "toutiao",
+        title: String(item.Title || item.title || ""),
+        url: String(
+          item.Url ||
+          item.url ||
+          `https://www.toutiao.com/trending/${item.ClusterIdStr || ""}`
+        ),
+        hotScore: Number(item.HotValue || 0),
+      }));
+
+    if (filtered.length === 0) {
+      // 关键词没匹配到，取前 10 条
+      return list.slice(0, 10).map(
+        (item: Record<string, unknown>): HotItem => ({
+          source: "toutiao",
+          title: String(item.Title || item.title || ""),
+          url: String(
+            item.Url ||
+            item.url ||
+            `https://www.toutiao.com/trending/${item.ClusterIdStr || ""}`
+          ),
+          hotScore: Number(item.HotValue || 0),
+        })
+      );
+    }
+
+    return filtered;
   } catch (error) {
     console.error("Toutiao API failed:", error);
-    // 降级：使用第三方聚合 API
     return fetchFromAggregator();
   }
 }
 
-async function fetchFromAggregator(): Promise<HotItem> {
-  const res = await fetch("https://api.vvhan.com/api/hotlist/wbHot", {
+async function fetchFromAggregator(): Promise<HotItem[]> {
+  const res = await fetch("https://api.vvhan.com/api/hotlist/toutiao", {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
@@ -57,11 +94,20 @@ async function fetchFromAggregator(): Promise<HotItem> {
     throw new Error("Aggregator returned no data");
   }
 
-  const top = data.data[0];
-  return {
-    source: "toutiao",
-    title: top.title,
-    url: top.url || top.mobilUrl || "",
-    hotScore: top.hot || 0,
-  };
+  const filtered = data.data
+    .filter((item: Record<string, unknown>) =>
+      matchesKeywords(String(item.title || ""))
+    )
+    .slice(0, 10);
+
+  const items = filtered.length > 0 ? filtered : data.data.slice(0, 10);
+
+  return items.map(
+    (item: Record<string, unknown>): HotItem => ({
+      source: "toutiao",
+      title: String(item.title || ""),
+      url: String(item.url || item.mobilUrl || ""),
+      hotScore: Number(item.hot || 0),
+    })
+  );
 }
