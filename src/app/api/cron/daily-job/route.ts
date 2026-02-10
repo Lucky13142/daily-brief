@@ -47,18 +47,20 @@ export async function GET(request: NextRequest) {
 
         console.log(`[Daily Job] Generated ${newsItems.length} news summaries`);
 
-        // 3. 写入数据库（跳过摘要为空的条目）
+        // 3. 写入数据库（跳过标题或摘要为空的条目）
         let successCount = 0;
         for (let i = 0; i < validItems.length; i++) {
-            if (!newsItems[i]?.summary || newsItems[i].summary.trim().length < 5) {
-                console.warn(`Skipped empty summary: ${validItems[i].title}`);
+            const title = newsItems[i]?.title?.trim();
+            const summary = newsItems[i]?.summary?.trim();
+            if (!title || title.length < 4 || !summary || summary.length < 5) {
+                console.warn(`Skipped invalid item: ${validItems[i].title}`);
                 continue;
             }
             try {
                 await insertPoster({
                     source: validItems[i].source,
-                    title: newsItems[i].title,
-                    summary: newsItems[i].summary,
+                    title: title,
+                    summary: summary,
                     hot_rank: i + 1,
                     raw_data: {
                         url: validItems[i].url,
