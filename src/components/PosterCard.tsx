@@ -7,10 +7,9 @@ const SOURCE_STYLE: Record<string, { label: string; color: string }> = {
 
 interface NewsCardProps {
     poster: Poster;
-    index: number;
 }
 
-export default function NewsCard({ poster, index }: NewsCardProps) {
+export default function NewsCard({ poster }: NewsCardProps) {
     const style = SOURCE_STYLE[poster.source] || {
         label: poster.source,
         color: "bg-gray-500",
@@ -19,12 +18,13 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
     const tags: string[] =
         (poster.raw_data as Record<string, unknown>)?.tags as string[] || [];
     const url = (poster.raw_data as Record<string, unknown>)?.url as string || "";
+    const hasUrl = typeof url === "string" && url.trim().length > 0;
 
     return (
         <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={hasUrl ? url : undefined}
+            target={hasUrl ? "_blank" : undefined}
+            rel={hasUrl ? "noopener noreferrer" : undefined}
             className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm flex flex-col gap-2 sm:gap-2.5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer active:scale-[0.98]">
             {/* 标题 */}
             <h3 className="text-sm sm:text-[15px] font-bold text-gray-900 leading-snug line-clamp-2">
@@ -32,16 +32,18 @@ export default function NewsCard({ poster, index }: NewsCardProps) {
             </h3>
 
             {/* 标签行 */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-                {tags.map((tag, i) => (
-                    <span
-                        key={i}
-                        className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-medium rounded bg-blue-50 text-blue-600 border border-blue-100"
-                    >
-                        {tag}
-                    </span>
-                ))}
-            </div>
+            {tags.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {tags.map((tag, i) => (
+                        <span
+                            key={i}
+                            className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-medium rounded bg-blue-50 text-blue-600 border border-blue-100"
+                        >
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            )}
 
             {/* 摘要 */}
             <p className="text-xs sm:text-[13px] text-gray-600 leading-relaxed line-clamp-3">

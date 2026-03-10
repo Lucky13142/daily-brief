@@ -5,7 +5,12 @@ import { Poster } from "@/lib/types";
 
 async function getPosters(): Promise<Poster[]> {
   try {
-    return await getRecentPosters(50);
+    const posters = await getRecentPosters(50);
+    return posters.filter((poster) => {
+      const title = poster.title?.trim() || "";
+      const summary = poster.summary?.trim() || "";
+      return title.length >= 4 && summary.length >= 5 && summary !== "暂无内容。";
+    });
   } catch (error) {
     console.error("Failed to fetch posters:", error);
     return [];

@@ -24,6 +24,12 @@ export async function insertPoster(poster: {
 export async function getRecentPosters(limit = 50): Promise<Poster[]> {
     const { rows } = await sql`
     SELECT * FROM posters
+    WHERE
+      title IS NOT NULL
+      AND summary IS NOT NULL
+      AND LENGTH(TRIM(title)) >= 4
+      AND LENGTH(TRIM(summary)) >= 5
+      AND TRIM(summary) <> '暂无内容。'
     ORDER BY created_at DESC
     LIMIT ${limit}
   `;

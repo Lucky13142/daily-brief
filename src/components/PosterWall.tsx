@@ -32,7 +32,7 @@ export default function PosterWall({ posters }: PosterWallProps) {
                     />
                 </svg>
                 <p className="text-lg font-medium">暂无资讯</p>
-                <p className="text-sm mt-1">点击上方按钮手动生成，或等待每天早上 8:00 自动生成</p>
+                <p className="text-sm mt-1">点击上方按钮手动生成，或等待每天早上 10:00 自动生成</p>
             </div>
         );
     }
@@ -49,8 +49,8 @@ export default function PosterWall({ posters }: PosterWallProps) {
 
             {/* 新闻网格：移动端单列，桌面端双列 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {posters.map((poster, index) => (
-                    <NewsCard key={poster.id} poster={poster} index={index} />
+                {posters.map((poster) => (
+                    <NewsCard key={poster.id} poster={poster} />
                 ))}
             </div>
 
