@@ -7,7 +7,7 @@ let _model: ChatOpenAI | null = null;
 function getModel() {
     if (!_model) {
         _model = new ChatOpenAI({
-            modelName: "gpt-4o",
+            modelName: "gpt-5.4",
             temperature: 0.7,
             openAIApiKey: process.env.OPENAI_API_KEY,
         });
